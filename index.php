@@ -1,26 +1,31 @@
 <?php
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
-$method = 'user.get';
-$queryUrl = 'https://'.$_REQUEST['DOMAIN'].'/rest/'.$method.'.json';
-$params = [];
-$queryData = http_build_query(array_merge($params, array("auth" => $_REQUEST['AUTH_ID'])));
+$arParams['B24_APPLICATION_SCOPE'] =;
+$arParams['BX24_APLICATION_ID'] = 'local.60ed80d9614835.27511525';
+$arParams['B24_APPLICATION_SECRET'] = 'U6rRlmPauD7aslSHRASw8mASGKWKLdDtm9JeRyNVNbdb6mXBm3';
 
-$curl = curl_init();
-curl_setopt_array($curl, array(
-    CURLOPT_SSL_VERIFYPEER => 0,
-    CURLOPT_HEADER => 0,
-    CURLOPT_RETURNTRANSFER => 1,
-    CURLOPT_URL => $queryUrl,
-    CURLOPT_POSTFIELDS => $queryData,
-));
+// create a log channel
+$log = new Logger('bitrix24');
+$log->pushHandler(new StreamHandler('path/to/your.log', Logger::DEBUG));
 
 
-$result = json_decode(curl_exec($curl), true);
-curl_close($curl);
+// init lib
+$obB24App = new \Bitrix24\Bitrix24(false, $log);
+$obB24App->setApplicationScope($arParams['B24_APPLICATION_SCOPE']);
+$obB24App->setApplicationId($arParams['B24_APPLICATION_ID']);
+$obB24App->setApplicationSecret($arParams['B24_APPLICATION_SECRET']);
 
-//echo '<pre>';
-//var_dump($result);
-//echo '</pre>';
+// set user-specific settings
+$obB24App->setDomain($arParams['DOMAIN']);
+$obB24App->setMemberId($arParams['MEMBER_ID']);
+$obB24App->setAccessToken($arParams['AUTH_ID']);
+$obB24App->setRefreshToken($arParams['REFRESH_ID']);
+
+// get information about current user from bitrix24
+$obB24User = new \Bitrix24\User\User($obB24App);
+$arCurrentB24User = $obB24User->current();
 
 ?>
 <!doctype html>
@@ -34,30 +39,35 @@ curl_close($curl);
     <title>Список сотрудников</title>
 </head>
 <body>
-    <table class="table">
-        <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Имя</th>
-            <th scope="col">Фамилия</th>
-            <th scope="col">Email</th>
-            <th scope="col">Дата рождения</th>
-        </tr>
-        <? foreach ($result['result'] as $value){?>
-        <tr>
-            <td><?echo $value['ID']?></td>
-            <td><?echo $value['NAME']?></td>
-            <td><?echo $value['LAST_NAME']?></td>
-            <td><?echo $value['EMAIL']?></td>
-            <td>
-                <?
-                    if (strlen($value['PERSONAL_BIRTHDAY']) != 0)
-                    {
-                    echo date('d-m-Y', strtotime($value['PERSONAL_BIRTHDAY']));
-                    }
-                ?>
-            </td>
-        </tr>
-        <? }?>
-    </table>
+<!--    <table class="table">-->
+<!--        <tr>-->
+<!--            <th scope="col">ID</th>-->
+<!--            <th scope="col">Имя</th>-->
+<!--            <th scope="col">Фамилия</th>-->
+<!--            <th scope="col">Email</th>-->
+<!--            <th scope="col">Дата рождения</th>-->
+<!--        </tr>-->
+<!--        --><?// foreach ($result['result'] as $value){?>
+<!--        <tr>-->
+<!--            <td>--><?//echo $value['ID']?><!--</td>-->
+<!--            <td>--><?//echo $value['NAME']?><!--</td>-->
+<!--            <td>--><?//echo $value['LAST_NAME']?><!--</td>-->
+<!--            <td>--><?//echo $value['EMAIL']?><!--</td>-->
+<!--            <td>-->
+<!--                --><?//
+//                    if (strlen($value['PERSONAL_BIRTHDAY']) != 0)
+//                    {
+//                    echo date('d-m-Y', strtotime($value['PERSONAL_BIRTHDAY']));
+//                    }
+//                ?>
+<!--            </td>-->
+<!--        </tr>-->
+<!--        --><?// }?>
+<!--    </table>-->
+<?
+echo '<pre>';
+var_dump($arCurrentB24User);
+echo '</pre>';
+?>
 </body>
 </html>
